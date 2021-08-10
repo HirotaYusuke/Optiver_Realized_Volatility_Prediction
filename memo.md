@@ -16,19 +16,19 @@
 - time_idの中で，バケットが始まって0からスタートして何秒後か．おそらく予測するのは10分後なのSecconds_in_bucketは最大600．
 
 ## bid_price[1/2] 
-- 株の買値の希望値を正規化した価格．出された買値の希望値を正規化し，1番多い値と2番目に多い値．
+- 株の買値の希望値の1番目と2番目．1番目と2番目に競争力のある買値．
 - Normalized prices of the most/second most competitive buy level.
 
 ## ask_price[1/2] 
-- 株の売値の希望値の1番目と2番目．出された売値の希望値を正規化し，1番多い値と2番目に多い値．
+- 株の売値の希望値の1番目と2番目．1番目と2番目に競争力のある売値．
 - Normalized prices of the most/second most competitive sell level.
 
 ## bid_size[1/2] 
-- 買うのを希望している側の競争力のある1番目と2番目の株式の数
+- 買うのを希望している側の1番目と2番目に競争力のある株式の数
 - The number of shares on the most/second most competitive buy level.
 
-ask_size[1/2] 
-- 売るのを希望している側の競争力のある1番目と2番目の株式の数．1番目と2番目の株式の数
+## ask_size[1/2] 
+- 売るのを希望している側の1番目と2番目に競争力のある株式の数
 - The number of shares on the most/second most competitive sell level.
 
 ## trade_[train/test].parquet: 
@@ -105,19 +105,60 @@ Provides the mapping between the other data files and the submission file. As wi
 - 株の変動性
 - Same definition as in train.csv. The benchmark is using the median target value from train.csv.
 
-
+#### book_[train/test].parquet, trade_[train/test].parquet, train.csvを用いてモデルを作成，学習を行う．最終的にtrain.csvの予測結果を提出する．
 
 ## tutorial notebookのmemo
 - 取引は、売りての言い値(ask price)と買い手の掛け値(bid price)が同じときでないと発生しない．
 - 株式市場では、流動性が大事
-## Order bookの統計量
 
-## bid/ask speedの計算方法
-![image](https://user-images.githubusercontent.com/79825066/128728034-323cb94b-614a-4ca7-b459-68c756a8c27d.png)
+# Order bookの統計量
+#### 基本的な市場予測アルゴリズム ・ 一般的な統計値
 
-- Best offer, best bidはどうやって求めるの？
+## bid/ask spreadの計算方法
+#### 取引の最も高い買値（最良買い気配値）と最も安い売値（最良売り気配値）の差をいう.この差が小さいほど、売買にかかる取引費用が小さい．
+<br>
 
-## Weighted average priceの計算方法
-![image](https://user-images.githubusercontent.com/79825066/128728271-01b960d7-4ba0-4bcf-a75c-01b6631afcc1.png)
+#### また、売買にかかる取引費用が小さい市場ほど、流動性が高いといえる．
+<br>
 
+#### 市場では様々な銘柄が異なるレベルで取引させれているため，bid/ask spread を計算するには，Best Offer と Best bid の価格の比率を取る．
+<br>
 
+![image](https://user-images.githubusercontent.com/79825066/128835343-aec665b1-8423-4e15-bb30-f7a5e566132f.png)
+
+- Best offer, best bidの求め方
+- 同じstock_id,time_id, seconds_in_bucketである場合のbid_price1 と ask_price1
+
+## Weighted average priceの計算方法 (VWAPと同じ)
+#### 今回のコンペティションでは，WAP(加重平均価格)を用いて瞬間的な株価平均とRealized Volatility(実現ボラティリティ)を算出する．
+<br>
+
+#### 売買代金を出来高で割ったものでその日の平均売買価格を表す．
+<br>
+
+![image](https://user-images.githubusercontent.com/79825066/128835244-b0708926-da3f-4d2b-93d4-ef519fe77f2d.png)
+
+#### ある銘柄を売買したすべての投資家の平均購入値段に当たるため，株価がWAPの上にあるか，下にあるかでその日の買った人の損益がプラスかマイナスかを確認できる
+
+## Log returns
+#### その日とその前日の株価の比較を行う方法．その日の株価を前日の株価で割る．
+<br>
+
+#### リターンは金融の分野で広く使われるが，数学的なモデリングが必要な場合，Log returns が好まれる．
+![image](https://user-images.githubusercontent.com/79825066/128835103-502fd301-cda9-4b0a-94fb-2d59fc7b8e84.png)
+
+- Stはとある瞬間 t の株価を表している．
+- 上の定義はt₁とt₂間の株価の差
+
+## Realized volatility
+#### オプション取引を行う際，株式のログリターンの標準偏差がモデルに入れる重要な説明変数となる．通常は1年単位で標準化し，年単位の標準偏差をボラティリティという．
+<br>
+
+#### 以下が予測するボラティリティを求める式．今回は10分間のブックデータが与えられ，その後10分後のボラティリティを求める．
+
+![image](https://user-images.githubusercontent.com/79825066/128838854-759cb753-e909-4a1b-888d-da10dec1641b.png)
+
+- 今回，全ての連続したブックのログリターンを計算し，それを実現ボラティリティ σ と定義する．
+- σ：ログリターンの二乗の総和の平方根
+
+#### ここでは，WAPを株式の価格とし，ログリターンを計算している．
