@@ -18,6 +18,12 @@
 
 ![RMSPE](https://user-images.githubusercontent.com/79825066/128718443-807a4bff-4de4-4db1-b8fb-46e4b0306b11.png)
 
+## Submission
+  - submission.csv として提出
+  - 2行のcsvファイル
+    - row_id
+    - target 
+
 ## Training Timeline
   - June 28, 2021 - Start Date
   - September 20, 2021 - Entry deadline. You must accept the competition rules before this date in order to compete.
