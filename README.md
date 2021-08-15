@@ -14,7 +14,7 @@
 
 ## Evaluation
 <br>
-評価方法：RMSPE（root mean squared percentage error）を用いる．RMPSEは以下のように定義される．
+評価方法：RMSPE（root mean squared percentage error）を用いる．RMSPEは以下のように定義される．
 
 ![RMSPE](https://user-images.githubusercontent.com/79825066/128718443-807a4bff-4de4-4db1-b8fb-46e4b0306b11.png)
 
