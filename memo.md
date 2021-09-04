@@ -162,3 +162,5 @@ Provides the mapping between the other data files and the submission file. As wi
 - σ：ログリターンの二乗の総和の平方根
 
 #### ここでは，WAPを株式の価格とし，ログリターンを計算している．
+
+#### 説明変数案1：Priceを微分し，変化率を見る．数値が大きいほどボラティリティは大きくなる．
