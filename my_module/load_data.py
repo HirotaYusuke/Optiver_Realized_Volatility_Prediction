@@ -8,6 +8,8 @@ import numpy as np
 from sklearn.datasets import load_boston
 from tqdm import tqdm
 import glob
+from typing import Optional, List
+import re
 
 data_dir = 'features'
 
@@ -33,44 +35,36 @@ def drop_columns(train, test, excl_columns):
     test = test.drop(excl_columns, axis=1)
     return train, test
 
-def load_datasets_sec(sec_list: [List[int]], excl_columns: Optional[List[str]] = None):
+def load_datasets(sec_list: [List[int]], excl_columns: Optional[List[str]] = None):
     # sec_listに0, 150, 300, 450入れるとそれぞれ追加できる。
     # ext_columnsに抜きたいやつを入れると、除外できる。150,300,450の特徴量を消したいときも0秒の時の名前のままで大丈夫。
     if sec_list is None:
         raise ValueError('sec_listが空です')
-    
     if 0 in sec_list:
         sec_list.remove(0)
-        train = pd.concat([pd.read_pickle(_path) for _path in tqdm(sorted(glob.glob(f"{data_dir}/*_train.ftr")), desc="reading all train features from 0s") if re.search(r'[^0-9]_train.ftr', _path)], axis=1)
-        test = pd.concat([pd.read_pickle(_path) for _path in tqdm(sorted(glob.glob(f"{data_dir}/*_test.ftr")), desc="reading all test features from 0s") if re.search(r'[^0-9]_test.ftr', _path)], axis=1)
+        train = pd.concat([pd.read_feather(_path) for _path in tqdm(sorted(glob.glob(f"{data_dir}/*_train.ftr")), desc="reading all train features from 0s") if re.search(r'[^0-9]_train.ftr', _path)], axis=1)
+        test = pd.concat([pd.read_feather(_path) for _path in tqdm(sorted(glob.glob(f"{data_dir}/*_test.ftr")), desc="reading all test features from 0s") if re.search(r'[^0-9]_test.ftr', _path)], axis=1)
         X_train = pd.concat((pop_row_stock_time(train), train), axis=1)
         y_train = X_train.pop('target')
         X_test = pd.concat((pop_row_stock_time(test), test), axis=1)
-        
         if excl_columns is not None:
             X_train, X_test = drop_columns(X_train, X_test, excl_columns)
-            
     else:
         X_train = load_row_stock_time(_type='train')
-        y_train = pd.read_pickle(f'{data_dir}/target_train.ftr')
+        y_train = pd.read_feather(f'{data_dir}/target_train.ftr')
         X_test = load_row_stock_time(_type='test')
-    
     if 150 in sec_list or 300 in sec_list or 450 in sec_list:
         for sec in sec_list:
             if not sec in [150, 300, 450]:
                 raise ValueError()
-            _X_train = pd.concat([pd.read_pickle(_path) for _path in tqdm(sorted(glob.glob(f"{data_dir}/*_{sec}_train.ftr")), desc=f"reading all train features from {sec}s")], axis=1).reset_index(drop=True)
-            _X_test = pd.concat([pd.read_pickle(_path) for _path in tqdm(sorted(glob.glob(f"{data_dir}/*_{sec}_test.ftr")), desc=f"reading all test features from {sec}s")], axis=1).reset_index(drop=True)
-            
+            _X_train = pd.concat([pd.read_feather(_path) for _path in tqdm(sorted(glob.glob(f"{data_dir}/*_{sec}_train.ftr")), desc=f"reading all train features from {sec}s")], axis=1).reset_index(drop=True)
+            _X_test = pd.concat([pd.read_feather(_path) for _path in tqdm(sorted(glob.glob(f"{data_dir}/*_{sec}_test.ftr")), desc=f"reading all test features from {sec}s")], axis=1).reset_index(drop=True)
             if excl_columns is not None:
                 _X_train, _X_test = drop_columns(_X_train, _X_test, list(map(lambda x: x + f"_{sec}", excl_columns)))
-            
             X_train = pd.concat((X_train, _X_train), axis=1)
             X_test = pd.concat((X_test, _X_test), axis=1)
-        
     train = pd.concat((X_train, y_train), axis=1)
-    
-    return train.reset_index(drop=True), X_test.reset_index(drop=True)
+    return train, X_test
 
 def load_all_datasets(type: str = "train"):
     # 全部
