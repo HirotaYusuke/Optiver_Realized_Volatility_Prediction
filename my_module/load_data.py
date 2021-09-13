@@ -72,12 +72,13 @@ def load_all_datasets(type: str = "train"):
     train_row, train_stock = pop_row_stock(train)
     X_train = pd.concat((train_row, train_stock, train), axis=1)
     y_train = train.pop('target')
-    
+    X_train = pd.concat((X_train, y_train), axis=1)
+
     test = pd.concat([pd.read_pickle(_path) for _path in tqdm(glob.glob(f"{data_dir}/*_test.ftr"), desc="reading all test features")], axis=1)
     test_row, test_stock = pop_row_stock(test)
     X_test = pd.concat((test_row, test_stock, test), axis=1)
     
-    return X_train, y_train, X_test
+    return X_train, X_test
 
 def load_datasets(feats):
     # 指定したやつだけ
@@ -86,10 +87,11 @@ def load_datasets(feats):
     train_stock = pd.read_pickle(f'{data_dir}/stock_id_train.ftr')
     X_train = pd.concat((train_row, train_stock, train), axis=1)
     y_train = pd.read_pickle(f'{data_dir}/target_train.ftr')
+    X_train = pd.concat((X_train, y_train), axis=1)
     
     X_test = pd.concat([pd.read_pickle(f'{data_dir}/{f}_test.ftr') for f in tqdm(feats, desc="reading test features")], axis=1)
     test_row = pd.read_pickle(f'{data_dir}/row_id_train.ftr')
     test_stock = pd.read_pickle(f'{data_dir}/stock_id_train.ftr')
     X_test = pd.concat((test_row, test_stock, train), axis=1)
     
-    return X_train, y_train, X_test
+    return X_train, X_test
